@@ -60,17 +60,22 @@
         overflow: scroll;
     }
 
-    #copy {
+    #action-buttons {
         position: absolute;
         top: 0.5rem;
         right: 0.5rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-button {
         height: 2rem;
         width: 2rem;
         border-radius: 0.25rem;
         border: none;
     }
 
-    #copy svg {
+    .action-button svg {
         height: 80%;
         width: 80%;
     }
@@ -86,19 +91,26 @@
 
     <main>
         <h1 id="heading">Math Snap</h1>
-        <p id="description">Type math equations in LaTeX and copy the output as an image.</p>
+        <p id="description">Type math equations in LaTeX and copy or download the output as an image.</p>
         <textarea id="input">
 % Type your equation in Latex
 x = \frac {-b \pm \sqrt{b^2 -4ac}} {2a}
         </textarea>
         <div id="output">
-            <button id="copy">
-                <svg id="copy-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960"
-                    width="24px">
-                    <path
-                        d="M480-260q75 0 127.5-52.5T660-440q0-75-52.5-127.5T480-620q-75 0-127.5 52.5T300-440q0 75 52.5 127.5T480-260Zm0-80q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM160-120q-33 0-56.5-23.5T80-200v-480q0-33 23.5-56.5T160-760h126l74-80h240l74 80h126q33 0 56.5 23.5T880-680v480q0 33-23.5 56.5T800-120H160Zm0-80h640v-480H638l-73-80H395l-73 80H160v480Zm320-240Z" />
-                </svg>
-            </button>
+            <div id="action-buttons">
+                <button id="copy" class="action-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+                        <path
+                            d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z" />
+                    </svg>
+                </button>
+                <button id="download" class="action-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+                        <path
+                            d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
+                    </svg>
+                </button>
+            </div>
         </div>
     </main>
 
@@ -107,6 +119,7 @@ x = \frac {-b \pm \sqrt{b^2 -4ac}} {2a}
         const input = document.getElementById('input');
         const output = document.getElementById('output');
         const copy = document.getElementById('copy');
+        const download = document.getElementById('download');
 
         const copyAnimation = copy.animate([
             { transform: 'scale(0.9)' },
@@ -115,6 +128,13 @@ x = \frac {-b \pm \sqrt{b^2 -4ac}} {2a}
             duration: 100,
         });
         copyAnimation.pause();
+        const downloadAnimation = download.animate([
+            { transform: 'scale(0.9)' },
+            { transform: 'scale(1)' },
+        ], {
+            duration: 100,
+        });
+        downloadAnimation.pause();
 
         let timeout = null;
 
@@ -173,7 +193,7 @@ x = \frac {-b \pm \sqrt{b^2 -4ac}} {2a}
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(
-                    image, 
+                    image,
                     paddingX * scaleRatio, paddingY * scaleRatio,
                     svgWidth * scaleRatio, svgHeight * scaleRatio
                 );
@@ -191,6 +211,50 @@ x = \frac {-b \pm \sqrt{b^2 -4ac}} {2a}
 
             copyAnimation.play();
         });
+
+        download.addEventListener('click', () => {
+            if (output.children.length < 2) {
+                return;
+            }
+
+            const svg = output.lastChild.firstChild;
+
+            const xml = new XMLSerializer().serializeToString(svg);
+            const svg64 = btoa(xml);
+            const b64Start = 'data:image/svg+xml;base64,';
+            const image64 = b64Start + svg64;
+            const image = new Image();
+            image.src = image64;
+
+            const svgWidth = svg.width.baseVal.value, svgHeight = svg.height.baseVal.value;
+            const paddingX = Math.max(10, svgWidth * 0.1), paddingY = Math.max(10, svgHeight * 0.1);
+
+            const scaleRatio = 10;
+            const canvas = new OffscreenCanvas((svgWidth + 2 * paddingX) * scaleRatio, (svgHeight + 2 * paddingY) * scaleRatio);
+            const ctx = canvas.getContext('2d');
+
+            image.onload = () => {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(
+                    image,
+                    paddingX * scaleRatio, paddingY * scaleRatio,
+                    svgWidth * scaleRatio, svgHeight * scaleRatio
+                );
+
+                canvas.convertToBlob().then((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'math-snap.png';
+                    link.click();
+                }).catch((err) => {
+                    alert(err);
+                });
+            }
+
+            downloadAnimation.play();
+        })
 
         input.addEventListener('keydown', function (e) {
             if (e.key === 'Tab') {
