@@ -101,7 +101,7 @@
             </button>
         </div>
     </main>
-    
+
     <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg-full.js"></script>
     <script>
         const input = document.getElementById('input');
@@ -167,13 +167,18 @@
             const svgWidth = svg.width.baseVal.value, svgHeight = svg.height.baseVal.value;
             const paddingX = Math.max(10, svgWidth * 0.1), paddingY = Math.max(10, svgHeight * 0.1);
 
-            const canvas = new OffscreenCanvas(svgWidth + 2 * paddingX, svgHeight + 2 * paddingY);
+            const scaleRatio = 10;
+            const canvas = new OffscreenCanvas((svgWidth + 2 * paddingX) * scaleRatio, (svgHeight + 2 * paddingY) * scaleRatio);
             const ctx = canvas.getContext('2d');
 
             image.onload = () => {
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(image, paddingX, paddingY);
+                ctx.drawImage(
+                    image, 
+                    paddingX * scaleRatio, paddingY * scaleRatio,
+                    svgWidth * scaleRatio, svgHeight * scaleRatio
+                );
 
                 canvas.convertToBlob().then((blob) => {
                     const item = new ClipboardItem({
