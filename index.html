@@ -83,12 +83,14 @@
 </style>
 
 <body>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg-full.js"></script>
 
     <main>
         <h1 id="heading">Math Snap</h1>
         <p id="description">Type math equations in LaTeX and copy the output as an image.</p>
-        <textarea id="input"></textarea>
+        <textarea id="input">
+            % Type your equation in Latex
+            x = \frac {-b \pm \sqrt{b^2 -4ac}} {2a}
+        </textarea>
         <div id="output">
             <button id="copy">
                 <svg id="copy-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960"
@@ -99,7 +101,8 @@
             </button>
         </div>
     </main>
-
+    
+    <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg-full.js"></script>
     <script>
         const input = document.getElementById('input');
         const output = document.getElementById('output');
@@ -117,7 +120,7 @@
 
         let timeout = null;
 
-        input.addEventListener('input', (e) => {
+        function render() {
             const options = MathJax.getMetricsFor(output);
 
             if (timeout) {
@@ -142,7 +145,10 @@
                         output.appendChild(document.createElement('pre')).appendChild(document.createTextNode(err.message));
                     })
             }, 50)
-        });
+        }
+        render();
+
+        input.addEventListener('input', render);
 
         copy.addEventListener('click', () => {
             if (output.children.length < 2) {
@@ -165,18 +171,18 @@
             const ctx = canvas.getContext('2d');
 
             image.onload = () => {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(image, paddingX, paddingY);
 
-                canvas.convertToBlob((blob) => {
-                    try {
-                        const item = new ClipboardItem({
-                            'image/png': blob
-                        });
+                canvas.convertToBlob().then((blob) => {
+                    const item = new ClipboardItem({
+                        'image/png': blob
+                    });
 
-                        navigator.clipboard.write([item]);
-                    } catch (err) {
-                        console.error(err);
-                    }
+                    navigator.clipboard.write([item]);
+                }).catch((err) => {
+                    console.error(err);
                 });
             }
 
