@@ -38,7 +38,8 @@
         margin: 0;
     }
 
-    #input, #highlighted {
+    #input,
+    #highlighted {
         width: 100%;
         height: 100%;
         font-size: 1rem;
@@ -161,7 +162,13 @@
 
         let timeout = null;
 
-        function render() {
+        function update() {
+            let text = input.value;
+            if (text.at(-1) == '\n') {
+                text += ' ';
+            }
+            highlighted.firstChild.innerHTML = hljs.highlight(text, { language: 'latex' }).value;
+
             const options = MathJax.getMetricsFor(output);
 
             if (timeout) {
@@ -174,7 +181,7 @@
                 }
 
                 MathJax.texReset();
-                MathJax.tex2svgPromise(input.value.trim(), options)
+                MathJax.tex2svgPromise(text.trim(), options)
                     .then((node) => {
                         const svg = node.firstChild;
 
@@ -187,18 +194,9 @@
                     })
             }, 50)
         }
-        render();
-        function syncInputAndHighlighted() {
-            const text = input.value;
-            if (text.at(-1) == '\n') {
-                text += ' ';
-            }
-            highlighted.firstChild.innerHTML = hljs.highlight('latex', text).value;
-        }
-        syncInputAndHighlighted();
+        update();
+        input.addEventListener('input', update);
 
-        input.addEventListener('input', render);
-        input.addEventListener('input', syncInputAndHighlighted);
         function syncScroll() {
             highlighted.scrollTop = input.scrollTop;
             highlighted.scrollLeft = input.scrollLeft;
@@ -271,9 +269,10 @@
 
                 this.value = this.value.substring(0, start) + '\t' + this.value.substring(end);
                 this.selectionStart = this.selectionEnd = start + 1;
+
+                update();
             }
         });
-
     </script>
 </body>
 
