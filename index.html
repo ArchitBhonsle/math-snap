@@ -109,12 +109,10 @@
         const copy = document.getElementById('copy');
 
         const copyAnimation = copy.animate([
-            { transform: 'scale(1.1)' },
             { transform: 'scale(0.9)' },
             { transform: 'scale(1)' },
         ], {
-            duration: 300,
-            easing: 'ease-out',
+            duration: 100,
         });
         copyAnimation.pause();
 
